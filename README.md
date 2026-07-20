@@ -1,10 +1,10 @@
-# tai-storage-github
+# tai42-storage-github
 
 [![CI](https://github.com/tai42ai/tai-storage-github/actions/workflows/ci.yml/badge.svg)](https://github.com/tai42ai/tai-storage-github/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 A GitHub-backed `Storage` provider for the TAI ecosystem. It stores content as
-files in a GitHub repository and serves the full `tai_contract.storage.Storage`
+files in a GitHub repository and serves the full `tai42_contract.storage.Storage`
 surface — the text methods (`load` / `list` / `upload` / `delete` / `delete_dir`)
 plus the binary/media methods (`load_bytes` / `upload_bytes` / `stat`).
 
@@ -13,8 +13,8 @@ plus the binary/media methods (`load_bytes` / `upload_bytes` / `stat`).
 TAI is an open-source runtime for MCP tools, agents, and workflows. A `Storage`
 backend is "where content physically lives" — a pluggable provider the runtime's
 `ResourceManager` loads and renders content over. This package is one such
-provider (GitHub); siblings back the same contract with S3 (`tai-storage-s3`) and
-the local filesystem (`tai-storage-local`). The ecosystem is open-ended: any
+provider (GitHub); siblings back the same contract with S3 (`tai42-storage-s3`) and
+the local filesystem (`tai42-storage-local`). The ecosystem is open-ended: any
 package can back the same contract, so this repo is this provider's own full doc
 home, and the documentation site covers the platform-level story:
 
@@ -25,25 +25,25 @@ home, and the documentation site covers the platform-level story:
 ## Install
 
 Requires **Python 3.13+**. Nothing is on PyPI yet, so install from source — clone
-this repo alongside your `tai-skeleton` checkout and add it as an editable
+this repo alongside your `tai42-skeleton` checkout and add it as an editable
 dependency of the environment that runs the server:
 
 ```bash
 git clone https://github.com/tai42ai/tai-storage-github
 cd tai-skeleton   # or your own app checkout
-uv add --editable ../tai-storage-github   # once published: uv add tai-storage-github
+uv add --editable ../tai-storage-github   # once published: uv add tai42-storage-github
 ```
 
 ## Use
 
-The backend is loaded by **import side-effect**: importing the `tai_storage_github`
-package runs its `@tai_app.storage.register_storage` decorator, making
+The backend is loaded by **import side-effect**: importing the `tai42_storage_github`
+package runs its `@tai42_app.storage.register_storage` decorator, making
 `GithubStorage` the active storage provider. Point a manifest's `storage_module`
 at the package:
 
 ```yaml
 # manifest.yml
-storage_module: tai_storage_github
+storage_module: tai42_storage_github
 ```
 
 ## Configuration

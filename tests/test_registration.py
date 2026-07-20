@@ -3,36 +3,36 @@
 from __future__ import annotations
 
 import pytest
-from tai_contract.storage import Storage
+from tai42_contract.storage import Storage
 
-from tai_storage_github import GithubStorage
+from tai42_storage_github import GithubStorage
 
 
 def test_import_exposes_storage_provider():
-    import tai_storage_github
+    import tai42_storage_github
 
-    assert tai_storage_github.GithubStorage.__name__ == "GithubStorage"
-    assert issubclass(tai_storage_github.GithubStorage, Storage)
+    assert tai42_storage_github.GithubStorage.__name__ == "GithubStorage"
+    assert issubclass(tai42_storage_github.GithubStorage, Storage)
 
 
 def test_import_registers_provider_as_side_effect():
-    # Importing the package must fire @tai_app.storage.register_storage on
+    # Importing the package must fire @tai42_app.storage.register_storage on
     # GithubStorage; the fake facet records the class it was handed. This fails
     # if the registration decorator is dropped, not just if the class changes.
-    import tai_storage_github
+    import tai42_storage_github
     from tests.conftest import _fake_app
 
-    assert _fake_app.storage.registered is tai_storage_github.GithubStorage
+    assert _fake_app.storage.registered is tai42_storage_github.GithubStorage
 
 
 def test_settings_env_prefix_is_storage_github():
-    from tai_storage_github.settings import GithubStorageSettings
+    from tai42_storage_github.settings import GithubStorageSettings
 
     assert GithubStorageSettings.model_config.get("env_prefix") == "STORAGE_GITHUB_"
 
 
 def test_settings_accessor_is_cached():
-    from tai_storage_github.settings import GithubStorageSettings, github_storage_settings
+    from tai42_storage_github.settings import GithubStorageSettings, github_storage_settings
 
     first = github_storage_settings()
     assert isinstance(first, GithubStorageSettings)
@@ -41,7 +41,7 @@ def test_settings_accessor_is_cached():
 
 
 def test_join_strips_empty_and_stray_slash_segments():
-    from tai_storage_github.storage import _join
+    from tai42_storage_github.storage import _join
 
     assert _join("https://x/", "/a//b/") == "https://x/a/b"
     assert _join("https://x/", "") == "https://x"

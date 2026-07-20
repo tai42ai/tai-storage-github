@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 import pytest
 from httpx import HTTPStatusError, Request
 
-from tai_storage_github import GithubStorage
+from tai42_storage_github import GithubStorage
 from tests.conftest import make_response
 
 

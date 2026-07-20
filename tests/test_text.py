@@ -7,7 +7,7 @@ import base64
 import pytest
 from httpx import HTTPStatusError
 
-from tai_storage_github import GithubStorage
+from tai42_storage_github import GithubStorage
 from tests.conftest import make_response
 
 pytestmark = pytest.mark.usefixtures("client")

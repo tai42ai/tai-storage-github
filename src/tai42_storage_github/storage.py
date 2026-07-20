@@ -1,4 +1,4 @@
-"""GitHub-backed :class:`~tai_contract.storage.Storage` provider.
+"""GitHub-backed :class:`~tai42_contract.storage.Storage` provider.
 
 Text lives on the render path (``load``/``list``/``upload``/``delete``/
 ``delete_dir``); binary/media rides ``load_bytes``/``upload_bytes`` (``stat``
@@ -20,11 +20,11 @@ import base64
 import logging
 
 import httpx
-from tai_contract.app import tai_app
-from tai_contract.storage import Storage, assert_not_root
+from tai42_contract.app import tai42_app
+from tai42_contract.storage import Storage, assert_not_root
 
-from tai_storage_github.client import GithubHttpxClient
-from tai_storage_github.settings import GithubStorageSettings, github_storage_settings
+from tai42_storage_github.client import GithubHttpxClient
+from tai42_storage_github.settings import GithubStorageSettings, github_storage_settings
 
 logger = logging.getLogger(__name__)
 
@@ -94,14 +94,14 @@ def _raise_for_status(resp: httpx.Response, action: str, path: str, url: str) ->
 
 
 # Importing this module registers GithubStorage as the active storage provider (a
-# manifest's storage_module: tai_storage_github names this package to import; there
+# manifest's storage_module: tai42_storage_github names this package to import; there
 # is no entry-point). The decorator returns the class unchanged.
-@tai_app.storage.register_storage
+@tai42_app.storage.register_storage
 class GithubStorage(Storage):
     async def load(self, path: str) -> str:
         settings = _configured_settings()
         url = _join(RAW_BASE_URL.format(username=settings.username, repo=settings.repo, branch=settings.branch), path)
-        async with tai_app.clients.client_ctx(GithubHttpxClient) as client:
+        async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             resp = await client.get(url, headers=_auth_headers(settings))
             self._guard_read(resp, path, url)
             return resp.text
@@ -109,7 +109,7 @@ class GithubStorage(Storage):
     async def load_bytes(self, path: str) -> bytes:
         settings = _configured_settings()
         url = _join(RAW_BASE_URL.format(username=settings.username, repo=settings.repo, branch=settings.branch), path)
-        async with tai_app.clients.client_ctx(GithubHttpxClient) as client:
+        async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             resp = await client.get(url, headers=_auth_headers(settings))
             self._guard_read(resp, path, url)
             # Raw bytes straight off the raw endpoint — no size cap, so a file over
@@ -136,7 +136,7 @@ class GithubStorage(Storage):
         """
         settings = _configured_settings()
         url = TREES_API_URL.format(username=settings.username, repo=settings.repo, branch=settings.branch)
-        async with tai_app.clients.client_ctx(GithubHttpxClient) as client:
+        async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             resp = await client.get(url, headers=_api_headers(settings), params={"recursive": "1"})
             _raise_for_status(resp, "listing", prefix or "/", url)
             data = resp.json()
@@ -170,7 +170,7 @@ class GithubStorage(Storage):
         url = _join(CONTENTS_API_URL.format(username=settings.username, repo=settings.repo), path)
         headers = _api_headers(settings)
         encoded = base64.b64encode(data).decode("ascii")
-        async with tai_app.clients.client_ctx(GithubHttpxClient) as client:
+        async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             sha: str | None = None
             # A 404 means the object does not exist yet (a create); any other
             # failure (auth, rate-limit) must surface, not be mistaken for a new
@@ -194,7 +194,7 @@ class GithubStorage(Storage):
         settings = _configured_settings()
         url = _join(CONTENTS_API_URL.format(username=settings.username, repo=settings.repo), path)
         headers = _api_headers(settings)
-        async with tai_app.clients.client_ctx(GithubHttpxClient) as client:
+        async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             get_resp = await client.get(url, headers=headers, params={"ref": settings.branch})
             if get_resp.status_code == 404:
                 raise FileNotFoundError(f"Object not found: {path}")

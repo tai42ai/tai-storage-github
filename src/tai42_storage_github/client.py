@@ -1,17 +1,17 @@
 """Pooled ``httpx.AsyncClient`` for the GitHub storage backend.
 
-A :class:`~tai_kit.clients.PooledClient` reached through the app's client facade
-(``tai_app.clients.client_ctx(GithubHttpxClient)``), pooled per event loop.
+A :class:`~tai42_kit.clients.PooledClient` reached through the app's client facade
+(``tai42_app.clients.client_ctx(GithubHttpxClient)``), pooled per event loop.
 ``trust_env=False`` ignores ambient proxy env vars; connection limits and timeout
-come from :func:`~tai_storage_github.settings.github_storage_settings`.
+come from :func:`~tai42_storage_github.settings.github_storage_settings`.
 """
 
 from __future__ import annotations
 
 import httpx
-from tai_kit.clients import PooledClient
+from tai42_kit.clients import PooledClient
 
-from tai_storage_github.settings import github_storage_settings
+from tai42_storage_github.settings import github_storage_settings
 
 
 class GithubHttpxClient(PooledClient[httpx.AsyncClient]):

@@ -8,7 +8,7 @@ import httpx
 import pytest
 from httpx import HTTPStatusError
 
-from tai_storage_github import GithubStorage
+from tai42_storage_github import GithubStorage
 from tests.conftest import make_response
 
 pytestmark = pytest.mark.usefixtures("client")
@@ -39,7 +39,7 @@ async def test_public_repo_omits_authorization_header(client, settings):
 
 async def test_settings_secretstr_hides_token_in_repr(monkeypatch):
     monkeypatch.setenv("STORAGE_GITHUB_TOKEN", "super-secret-token")
-    from tai_storage_github.settings import GithubStorageSettings
+    from tai42_storage_github.settings import GithubStorageSettings
 
     loaded = GithubStorageSettings()
 
@@ -52,7 +52,7 @@ async def test_settings_secretstr_hides_token_in_repr(monkeypatch):
 async def test_client_create_and_close(monkeypatch):
     from types import SimpleNamespace
 
-    from tai_storage_github import client as client_mod
+    from tai42_storage_github import client as client_mod
 
     monkeypatch.setattr(
         client_mod,

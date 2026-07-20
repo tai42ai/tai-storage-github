@@ -1,8 +1,8 @@
-"""Bind a light fake ``tai_app`` before the backend is imported.
+"""Bind a light fake ``tai42_app`` before the backend is imported.
 
-``tai_storage_github.storage`` decorates ``GithubStorage`` with
-``@tai_app.storage.register_storage`` at import time and reaches the pooled HTTP
-client through ``tai_app.clients.client_ctx``. Both resolve through the runtime
+``tai42_storage_github.storage`` decorates ``GithubStorage`` with
+``@tai42_app.storage.register_storage`` at import time and reaches the pooled HTTP
+client through ``tai42_app.clients.client_ctx``. Both resolve through the runtime
 forwarding handle, which raises until an app is bound. Binding a fake here (at
 conftest import, before any test module imports the backend) satisfies both: the
 registration decorator is a passthrough, and ``client_ctx`` yields whatever mock
@@ -17,8 +17,8 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from tai_contract.app import tai_app
-from tai_contract.storage import Storage
+from tai42_contract.app import tai42_app
+from tai42_contract.storage import Storage
 
 
 class _FakeStorageFacet:
@@ -56,7 +56,7 @@ class _FakeApp:
 
 
 _fake_app = _FakeApp()
-tai_app.bind(_fake_app)
+tai42_app.bind(_fake_app)
 
 
 @pytest.fixture
@@ -72,8 +72,8 @@ def settings() -> SimpleNamespace:
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch, settings: SimpleNamespace) -> AsyncMock:
-    """An AsyncMock HTTP client yielded by ``tai_app.clients.client_ctx``."""
-    from tai_storage_github import storage as storage_mod
+    """An AsyncMock HTTP client yielded by ``tai42_app.clients.client_ctx``."""
+    from tai42_storage_github import storage as storage_mod
 
     monkeypatch.setattr(storage_mod, "github_storage_settings", lambda: settings)
     mock = AsyncMock()

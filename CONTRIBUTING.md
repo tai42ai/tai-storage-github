@@ -1,12 +1,12 @@
-# Contributing to tai-storage-github
+# Contributing to tai42-storage-github
 
-`tai-storage-github` is the GitHub-backed **Storage** provider for the TAI
+`tai42-storage-github` is the GitHub-backed **Storage** provider for the TAI
 ecosystem: it stores content as files in a GitHub repository and serves the full
-`tai_contract.storage.Storage` surface — the text methods (`load` / `list` /
+`tai42_contract.storage.Storage` surface — the text methods (`load` / `list` /
 `upload` / `delete` / `delete_dir`) plus the binary/media methods (`load_bytes` /
 `upload_bytes` / `stat`). The hard rule (the plugin rule): **it depends on
-`tai-contract` + `tai-kit` only and never imports the skeleton.** Importing the
-`tai_storage_github` package fires the `@tai_app.storage.register_storage`
+`tai42-contract` + `tai42-kit` only and never imports the skeleton.** Importing the
+`tai42_storage_github` package fires the `@tai42_app.storage.register_storage`
 decorator on `GithubStorage` as a side-effect, so naming the package in a
 manifest's `storage_module` activates it — there is no import edge to the
 skeleton in either direction.
@@ -16,7 +16,7 @@ skeleton in either direction.
 - **No skeleton import — ever.** The package is contract-facing; the ban is
   enforced by ruff (`flake8-tidy-imports`), so a stray import fails lint:
   ```bash
-  grep -rn "tai_skeleton" src/   # must be empty
+  grep -rn "tai42_skeleton" src/   # must be empty
   ```
 - **Loud errors.** No swallowed exceptions, silent fallbacks, or silent
   truncation. An oversized write, a `truncated` tree listing, or a failed

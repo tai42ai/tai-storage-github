@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a defect in tai-storage-github (the GitHub-backed Storage provider)
+description: Report a defect in tai42-storage-github (the GitHub-backed Storage provider)
 labels: ["bug"]
 body:
   - type: textarea
@@ -20,7 +20,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: tai-storage-github version
+      label: tai42-storage-github version
       placeholder: "0.1.0"
     validations:
       required: true
@@ -28,7 +28,7 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Python version, OS, the host tai-skeleton version, and the target repo's visibility (public/private).
+      description: Python version, OS, the host tai42-skeleton version, and the target repo's visibility (public/private).
       placeholder: "Python 3.13.x, macOS 15"
     validations:
       required: true
