@@ -1,0 +1,57 @@
+# Contributing to tai-storage-github
+
+`tai-storage-github` is the GitHub-backed **Storage** provider for the TAI
+ecosystem: it stores content as files in a GitHub repository and serves the full
+`tai_contract.storage.Storage` surface — the text methods (`load` / `list` /
+`upload` / `delete` / `delete_dir`) plus the binary/media methods (`load_bytes` /
+`upload_bytes` / `stat`). The hard rule (the plugin rule): **it depends on
+`tai-contract` + `tai-kit` only and never imports the skeleton.** Importing the
+`tai_storage_github` package fires the `@tai_app.storage.register_storage`
+decorator on `GithubStorage` as a side-effect, so naming the package in a
+manifest's `storage_module` activates it — there is no import edge to the
+skeleton in either direction.
+
+## Ground rules
+
+- **No skeleton import — ever.** The package is contract-facing; the ban is
+  enforced by ruff (`flake8-tidy-imports`), so a stray import fails lint:
+  ```bash
+  grep -rn "tai_skeleton" src/   # must be empty
+  ```
+- **Loud errors.** No swallowed exceptions, silent fallbacks, or silent
+  truncation. An oversized write, a `truncated` tree listing, or a failed
+  request raises rather than acting on partial data.
+- **The token stays secret.** It is held as a `SecretStr` and never appears in a
+  log line, repr, or error message.
+- **Typed package** (`py.typed`). Pyright runs clean.
+
+## Layout
+
+- `storage.py` — `GithubStorage` (the `Storage` impl) and its registration.
+- `client.py` — the pooled GitHub HTTP client (raw endpoint for reads, Contents
+  API for writes, Git Trees API for listing).
+- `settings.py` — the `STORAGE_GITHUB_` settings.
+
+## Dev
+
+```bash
+uv sync
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+```
+
+For local cross-repo work, `make dev` editable-installs the sibling `tai-*`
+checkouts this package builds on into the venv. While `[tool.uv.sources]` pins
+those siblings to local paths, `uv sync` already installs them editable and
+`make dev` changes nothing; once the lock resolves them from the registry,
+`uv sync` / `uv run` installs the published builds instead, so re-run
+`make dev` afterward to restore the editable links.
+
+Before any commit, run a secret scan over `src/` and `tests/` (e.g.
+`detect-secrets scan`).
+
+## License
+
+By contributing you agree your contributions are licensed under Apache-2.0.
