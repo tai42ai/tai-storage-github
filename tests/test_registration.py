@@ -16,9 +16,8 @@ def test_import_exposes_storage_provider():
 
 
 def test_import_registers_provider_as_side_effect():
-    # Importing the package must fire @tai42_app.storage.register_storage on
-    # GithubStorage; the fake facet records the class it was handed. This fails
-    # if the registration decorator is dropped, not just if the class changes.
+    # Importing the package must register GithubStorage via the decorator; the
+    # fake facet records the class it was handed.
     import tai42_storage_github
     from tests.conftest import _fake_app
 
@@ -48,9 +47,8 @@ def test_join_strips_empty_and_stray_slash_segments():
     assert _join("https://x", "a/b") == "https://x/a/b"
 
 
-# An unset owner/repo must surface as a config error naming the env var — before
-# any URL is built or request sent — never as a 404 masquerading as a missing
-# object.
+# An unset owner/repo surfaces as a config error naming the env var, before any
+# request is sent.
 
 
 async def test_unset_username_raises_config_error(client, settings):

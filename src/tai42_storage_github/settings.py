@@ -1,8 +1,7 @@
-"""Settings for the GitHub storage backend.
+"""Settings for the GitHub storage backend (``STORAGE_GITHUB_`` env vars).
 
-Configured through ``STORAGE_GITHUB_``-prefixed environment variables. The token
-is a :class:`~pydantic.SecretStr` so it never surfaces in a repr, log line, or
-traceback; the plaintext is read only when composing the ``Authorization`` header.
+The token is a :class:`~pydantic.SecretStr` so it never surfaces in a repr, log,
+or traceback.
 """
 
 from __future__ import annotations

@@ -1,10 +1,7 @@
 """Bind a light fake ``tai42_app`` before the backend is imported.
 
-``tai42_storage_github.storage`` decorates ``GithubStorage`` with
-``@tai42_app.storage.register_storage`` at import time and reaches the pooled HTTP
-client through ``tai42_app.clients.client_ctx``. Both resolve through the runtime
-forwarding handle, which raises until an app is bound. Binding a fake here (at
-conftest import, before any test module imports the backend) satisfies both: the
+``tai42_storage_github.storage`` registers ``GithubStorage`` and reaches the pooled
+HTTP client via ``tai42_app`` at import time, so a fake is bound here first. The
 registration decorator is a passthrough, and ``client_ctx`` yields whatever mock
 client a test installs via the ``client`` fixture.
 """

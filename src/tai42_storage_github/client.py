@@ -1,7 +1,5 @@
-"""Pooled ``httpx.AsyncClient`` for the GitHub storage backend.
+"""Pooled ``httpx.AsyncClient`` for the GitHub storage backend, per event loop.
 
-A :class:`~tai42_kit.clients.PooledClient` reached through the app's client facade
-(``tai42_app.clients.client_ctx(GithubHttpxClient)``), pooled per event loop.
 ``trust_env=False`` ignores ambient proxy env vars; connection limits and timeout
 come from :func:`~tai42_storage_github.settings.github_storage_settings`.
 """

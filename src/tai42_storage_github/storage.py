@@ -1,17 +1,10 @@
 """GitHub-backed :class:`~tai42_contract.storage.Storage` provider.
 
-Text lives on the render path (``load``/``list``/``upload``/``delete``/
-``delete_dir``); binary/media rides ``load_bytes``/``upload_bytes`` (``stat``
-inherits the contract's path-inference default — GitHub stores no per-object
-content-type).
-
-Reads go through the RAW endpoint (``raw.githubusercontent.com``), never the
-Contents API: the Contents API silently returns ``content: ""`` for a file over
-1 MiB, so reading a large object there would yield empty bytes. The raw endpoint
-is CDN-cached, so a read shortly after a write may serve the previous content for
-up to ~5 minutes. Writes go through the Contents API (base64) and are capped
-conservatively well within the API limit, raising loudly before the request
-rather than truncating.
+Reads use the RAW endpoint (``raw.githubusercontent.com``): the Contents API
+returns empty content for files over 1 MiB. The raw endpoint is CDN-cached, so a
+read shortly after a write may serve stale content for up to ~5 minutes. Writes
+use the Contents API (base64) and are capped below the API limit, raising before
+the request rather than truncating.
 """
 
 from __future__ import annotations
@@ -32,10 +25,8 @@ RAW_BASE_URL = "https://raw.githubusercontent.com/{username}/{repo}/refs/heads/{
 CONTENTS_API_URL = "https://api.github.com/repos/{username}/{repo}/contents"
 TREES_API_URL = "https://api.github.com/repos/{username}/{repo}/git/trees/{branch}"
 
-# Conservative upload cap, well within GitHub's Contents API limit. A file over
-# this raises loudly BEFORE the request (never a silent truncation); the API's own
-# 422 is the backstop for anything that slips through. Reads are NOT capped — they
-# use the raw endpoint, which serves files of any size.
+# Conservative upload cap below GitHub's Contents API limit; an oversize file
+# raises before the request. Reads are uncapped (raw endpoint).
 MAX_UPLOAD_BYTES = 1024 * 1024
 
 
@@ -47,12 +38,8 @@ def _join(base: str, path: str) -> str:
 
 
 def _configured_settings() -> GithubStorageSettings:
-    """The cached settings, raising a clear config error when the repo is unset.
-
-    Checked at use time, before any URL is built, so a missing owner/repo
-    surfaces as this message naming the env vars — never as a 404 on a URL with
-    ``None`` formatted into it (which would masquerade as a missing object).
-    """
+    """The cached settings; raises a clear config error naming the env vars when
+    owner/repo is unset."""
     settings = github_storage_settings()
     missing = [
         env
@@ -67,9 +54,7 @@ def _configured_settings() -> GithubStorageSettings:
 def _auth_headers(settings: GithubStorageSettings) -> dict[str, str]:
     """Authorization header, present only when a token is configured.
 
-    The token is read from the :class:`~pydantic.SecretStr` solely here; it never
-    appears in a log line or error message (only headers carry it, and headers are
-    never logged).
+    The token is read from the :class:`~pydantic.SecretStr` only here and never logged.
     """
     if settings.token is None:
         return {}
@@ -93,9 +78,7 @@ def _raise_for_status(resp: httpx.Response, action: str, path: str, url: str) ->
         raise
 
 
-# Importing this module registers GithubStorage as the active storage provider (a
-# manifest's storage_module: tai42_storage_github names this package to import; there
-# is no entry-point). The decorator returns the class unchanged.
+# Importing this module registers GithubStorage as the active storage provider.
 @tai42_app.storage.register_storage
 class GithubStorage(Storage):
     async def load(self, path: str) -> str:
@@ -112,8 +95,7 @@ class GithubStorage(Storage):
         async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             resp = await client.get(url, headers=_auth_headers(settings))
             self._guard_read(resp, path, url)
-            # Raw bytes straight off the raw endpoint — no size cap, so a file over
-            # 1 MiB (which the Contents API would return empty) reads in full.
+            # Raw endpoint has no size cap, unlike the Contents API.
             return resp.content
 
     @staticmethod
@@ -128,11 +110,8 @@ class GithubStorage(Storage):
     async def _list_blobs(self, prefix: str) -> list[str]:
         """Every blob path in the repo, optionally filtered to ``prefix``.
 
-        Uses the recursive Git Trees API (one request) rather than the Contents
-        API, whose per-directory listing caps at 1000 entries with no pagination —
-        a large directory would be silently under-listed. The Trees response
-        carries a ``truncated`` flag, raised on loudly rather than acting on a
-        partial listing.
+        Uses the recursive Git Trees API (one request); its ``truncated`` flag is
+        raised on loudly rather than acting on a partial listing.
         """
         settings = _configured_settings()
         url = TREES_API_URL.format(username=settings.username, repo=settings.repo, branch=settings.branch)
@@ -156,8 +135,7 @@ class GithubStorage(Storage):
         await self._put_contents(path, content.encode("utf-8"))
 
     async def upload_bytes(self, path: str, data: bytes, content_type: str | None = None) -> None:
-        # content_type is intentionally unused: GitHub keeps no per-object
-        # content-type, so stat() infers it from the path suffix.
+        # GitHub stores no per-object content-type; content_type is unused.
         await self._put_contents(path, data)
 
     async def _put_contents(self, path: str, data: bytes) -> None:
@@ -172,9 +150,8 @@ class GithubStorage(Storage):
         encoded = base64.b64encode(data).decode("ascii")
         async with tai42_app.clients.client_ctx(GithubHttpxClient) as client:
             sha: str | None = None
-            # A 404 means the object does not exist yet (a create); any other
-            # failure (auth, rate-limit) must surface, not be mistaken for a new
-            # object.
+            # A 404 means the object doesn't exist yet (a create); any other
+            # failure must surface, not be mistaken for a new object.
             get_resp = await client.get(url, headers=headers, params={"ref": settings.branch})
             if get_resp.status_code == 200:
                 existing = get_resp.json()
@@ -208,8 +185,7 @@ class GithubStorage(Storage):
 
             sha = data.get("sha")
             # The delete payload requires the blob sha; a file object without one
-            # is an unexpected API response, raised on here rather than deferred
-            # to the remote's opaque 422.
+            # is an unexpected response, raised on here.
             if not sha:
                 raise RuntimeError(f"GitHub Contents API returned no blob sha for {path}; cannot delete it.")
 
@@ -218,12 +194,9 @@ class GithubStorage(Storage):
             _raise_for_status(resp, "deleting", path, url)
 
     async def delete_dir(self, path: str) -> None:
-        """Delete every file under ``path``, one Contents-API request per file.
+        """Delete every file under ``path`` sequentially (GitHub has no bulk delete).
 
-        GitHub has no bulk delete, so files are deleted sequentially. A failure
-        mid-loop raises immediately and leaves the files already deleted gone —
-        the partial state surfaces loudly rather than being hidden or rolled
-        back.
+        A failure mid-loop raises immediately; the partial deletion surfaces loudly.
         """
         assert_not_root(path)
         prefix = path if path.endswith("/") else f"{path}/"
@@ -235,10 +208,8 @@ class GithubStorage(Storage):
             try:
                 await self.delete(file_path)
             except FileNotFoundError:
-                # The object was already gone (a concurrent delete). A folder
-                # delete is idempotent: the goal is absence, and it holds. A real
-                # DELETE failure raises HTTPStatusError and is not caught here, so
-                # it still surfaces loudly.
+                # Already gone (concurrent delete); the delete is idempotent. A
+                # real DELETE failure raises HTTPStatusError and is not caught here.
                 logger.info("Object %s already gone during dir delete of %s; skipping", file_path, path)
 
 
